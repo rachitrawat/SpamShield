@@ -24,7 +24,16 @@ from subprocess import check_output
 print(check_output(["ls", dataset_dir]).decode("utf8"))
 
 
+# ## pandas - load CSV into dataframe
+
 # In[ ]:
 
+questions_df = pd.read_csv(dataset_dir+dataset_dir_questions, encoding='latin1')
+answers_df = pd.read_csv(dataset_dir+dataset_dir_answers, encoding='latin1')
+tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1')
 
+# Sample dataframe - uncomment to view
+# questions_df
+# answers_df
+# tags_df
 
