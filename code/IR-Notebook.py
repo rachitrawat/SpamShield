@@ -3,7 +3,8 @@
 
 # ## Setup Environment
 
-# In[1]:
+# In[ ]:
+
 
 # load required packages
 
@@ -41,19 +42,35 @@ print(check_output(["ls", dataset_dir]).decode("utf8"))
 
 # In[ ]:
 
+
+# Read CSV
+
+# Dimensionality - (rows, columns)
+
+# (1264216, 7) 
 questions_df = pd.read_csv(dataset_dir+dataset_dir_questions, encoding='latin1')
+
+# (2014516, 6)
 answers_df = pd.read_csv(dataset_dir+dataset_dir_answers, encoding='latin1')
+
+# (3750994, 2)
 tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1')
 
+# Calculate dimensionality
+# questions_df.shape 
+# answers_df.shape 
+# tags_df.shape 
+
 # Sample dataframe - uncomment to view
-# questions_df
-# answers_df
-# tags_df
+# questions_df.head(10) 
+# answers_df.head(10)
+# tags_df.head(10) 
 
 
 # ## Top 10 most common tags
 
 # In[ ]:
+
 
 tags_tally = collections.Counter(tags_df['Tag'])
 
