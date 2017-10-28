@@ -1,7 +1,13 @@
 
 # coding: utf-8
 
-# ## Setup Environment
+# ** Objective: ** 
+# ** To develop a statistical model for predicting whether questions will be upvoted, downvoted, or closed based on their text. ** 
+# ** To predict how long questions will take to answer. **
+# 
+# ** Authors: Rachit Rawat, Rudradeep Guha, Vineet Nandkishore **
+
+# ** Setup Environment **
 
 # In[ ]:
 
@@ -38,7 +44,7 @@ from subprocess import check_output
 print(check_output(["ls", dataset_dir]).decode("utf8"))
 
 
-# ## pandas - load CSV into dataframe
+# ** pandas - load CSV into dataframe **
 
 # In[ ]:
 
@@ -67,7 +73,7 @@ tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1')
 # tags_df.head(10) 
 
 
-# ## Top 10 most common tags
+# ** Top 10 most common tags **
 
 # In[ ]:
 
@@ -88,5 +94,25 @@ for i in range(len(y)):
         plt.plot(i,y[i], marker='v', linestyle='',ms=area[i],label=x[i])
 
 plt.legend(numpoints=1)
+plt.show()
+
+
+# ** Distribution  - number of answers per question **
+
+# In[ ]:
+
+
+ans_per_question = collections.Counter(answers_df['ParentId'])
+answerid,noAnswers= zip(*ans_per_question.most_common())
+
+N=50
+plt.bar(range(N), noAnswers[:N], align='center', alpha=0.5)
+#plt.xticks(y_pos, objects)
+
+plt.ylabel('Number of Answers per Question')
+plt.xlabel('Question Id')
+plt.title('Distribution of Answers per question ')
+plt.text(3,400,"Average answers per question: "+str(math.ceil((np.mean(noAnswers)))))
+
 plt.show()
 
