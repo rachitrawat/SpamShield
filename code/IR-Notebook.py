@@ -9,13 +9,16 @@
 
 # ** Setup Environment **
 
-# In[2]:
+# In[1]:
 
 
 # load required packages
 
 # for creating dataframes from csv datasets
 import pandas as pd
+
+# for stripping stop words
+from nltk.corpus import stopwords
 
 # for removing HTML tags from text body
 from html.parser import HTMLParser
@@ -46,10 +49,13 @@ dataset_dir_tags = "Tags.csv"
 from subprocess import check_output
 print(check_output(["ls", dataset_dir]).decode("utf8"))
 
+cachedStopWords = stopwords.words("english")
+
+
 
 # ** HTML tags Stripper class **
 
-# In[3]:
+# In[2]:
 
 
 class MLStripper(HTMLParser):
@@ -72,7 +78,7 @@ def strip_tags(html):
 # ** pandas - load CSV into dataframe **
 # 
 
-# In[4]:
+# In[3]:
 
 
 # Read CSV
@@ -97,7 +103,7 @@ tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::10
 
 # ** Sample dataframe before stripping **
 
-# In[5]:
+# In[4]:
 
 
 # Calculate dimensionality
@@ -111,23 +117,23 @@ questions_df.head(10)
 # tags_df.head(10) 
 
 
-# ** Strip HTML tags from text body **
+# ** Strip HTML tags and stop words from text body **
 
-# In[6]:
+# In[5]:
 
 
-# Remove HTML tags from body column
+# Remove HTML tags and stop words from body column
 for index, row in questions_df.iterrows():
-   questions_df.at[index, 'Body']= strip_tags(row[6])
+   questions_df.at[index, 'Body']= ' '.join([word for word in strip_tags(row[6]).split() if word not in cachedStopWords])
    
-# Remove HTML tags from body column
+# Remove HTML tags and stop words from body column
 for index, row in answers_df.iterrows():
-   answers_df.at[index, 'Body']= strip_tags(row[5])  
+   answers_df.at[index, 'Body']= ' '.join([word for word in strip_tags(row[5]).split() if word not in cachedStopWords]) 
 
 
 # ** Sample dataframe after stripping **
 
-# In[7]:
+# In[6]:
 
 
 # Calculate dimensionality
@@ -136,16 +142,16 @@ for index, row in answers_df.iterrows():
 # tags_df.shape 
 
 # Sample dataframe - uncomment to view
-questions_df.head(10) 
+questions_df.head(10)
 # answers_df.head(10)
-# tags_df.head(10) 
+# tags_df.head(10)
 
 
 # # Initial analysis
 
 # ** Top 10 most common tags **
 
-# In[14]:
+# In[7]:
 
 
 tags_tally = collections.Counter(tags_df['Tag'])
@@ -169,7 +175,7 @@ plt.show()
 
 # ![](http://)![](http://)**Distribution  - number of answers per question**
 
-# In[95]:
+# In[8]:
 
 
 ans_per_question = collections.Counter(answers_df['ParentId'])
