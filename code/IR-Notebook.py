@@ -122,10 +122,11 @@ questions_df.head(10)
 # In[5]:
 
 
-# Remove HTML tags and stop words from body column
+# Remove HTML tags and stop words from body and title column
 for index, row in questions_df.iterrows():
    questions_df.at[index, 'Body']= ' '.join([word for word in strip_tags(row[6]).split() if word not in cachedStopWords])
-   
+   questions_df.at[index, 'Title']= ' '.join([word for word in strip_tags(row[5]).split() if word not in cachedStopWords])
+
 # Remove HTML tags and stop words from body column
 for index, row in answers_df.iterrows():
    answers_df.at[index, 'Body']= ' '.join([word for word in strip_tags(row[5]).split() if word not in cachedStopWords]) 
