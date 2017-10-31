@@ -20,6 +20,10 @@ import pandas as pd
 # for stripping stop words
 from nltk.corpus import stopwords
 
+# for TF-IDF
+import math
+from textblob import TextBlob as tb
+
 # for removing HTML tags from text body
 from html.parser import HTMLParser
 
@@ -75,10 +79,42 @@ def strip_tags(html):
     return s.get_data()
 
 
+# ** TF-IDF helper fucntions **
+
+# In[3]:
+
+
+# tf(word, blob) computes "term frequency" which is the number of times 
+# a word appears in a document blob,normalized by dividing by 
+# the total number of words in blob. 
+# We use TextBlob for breaking up the text into words and getting the word counts.
+def tf(word, blob):
+    return blob.words.count(word) / len(blob.words)
+
+# n_containing(word, bloblist) returns the number of documents containing word.
+# A generator expression is passed to the sum() function.
+def n_containing(word, bloblist):
+    return sum(1 for blob in bloblist if word in blob.words)
+
+# idf(word, bloblist) computes "inverse document frequency" which measures how common 
+# a word is among all documents in bloblist. 
+# The more common a word is, the lower its idf. 
+# We take the ratio of the total number of documents 
+# to the number of documents containing word, then take the log of that. 
+# Add 1 to the divisor to prevent division by zero.
+def idf(word, bloblist):
+    return math.log(len(bloblist) / (1 + n_containing(word, bloblist)))
+
+# tfidf(word, blob, bloblist) computes the TF-IDF score. 
+# It is simply the product of tf and idf.
+def tfidf(word, blob, bloblist):
+    return tf(word, blob) * idf(word, bloblist)
+
+
 # ** pandas - load CSV into dataframe **
 # 
 
-# In[3]:
+# In[4]:
 
 
 # Read CSV
@@ -103,7 +139,7 @@ tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::10
 
 # ** Sample dataframe before stripping **
 
-# In[4]:
+# In[5]:
 
 
 # Calculate dimensionality
@@ -119,7 +155,7 @@ questions_df.head(10)
 
 # ** Strip HTML tags and stop words from text body **
 
-# In[5]:
+# In[6]:
 
 
 # Remove HTML tags and stop words from body and title column
@@ -134,7 +170,7 @@ for index, row in answers_df.iterrows():
 
 # ** Sample dataframe after stripping **
 
-# In[6]:
+# In[7]:
 
 
 # Calculate dimensionality
@@ -148,11 +184,44 @@ questions_df.head(10)
 # tags_df.head(10)
 
 
+# ** Make a TF-IDF word dictionary (for 5 questions) **
+
+# In[8]:
+
+
+i=1
+tfidf_dict={}
+bloblist=[]
+
+for index, row in questions_df.iterrows():
+    bloblist.append(tb(row[6]))
+    if i==5:
+        break
+    i+=1
+
+for i, blob in enumerate(bloblist):
+    print("Top words in question {}".format(i + 1))
+    scores = {word: tfidf(word, blob, bloblist) for word in blob.words}
+    sorted_words = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    for word, score in sorted_words[:3]:
+        print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
+        tfidf_dict[word]=round(score, 5)
+
+
+# ** Sample TF-IDF dictionary **
+
+# In[9]:
+
+
+for k, v in tfidf_dict.items():
+    print(k, v)
+
+
 # # Initial analysis
 
 # ** Top 10 most common tags **
 
-# In[7]:
+# In[10]:
 
 
 tags_tally = collections.Counter(tags_df['Tag'])
@@ -176,7 +245,7 @@ plt.show()
 
 # ![](http://)![](http://)**Distribution  - number of answers per question**
 
-# In[8]:
+# In[11]:
 
 
 ans_per_question = collections.Counter(answers_df['ParentId'])
