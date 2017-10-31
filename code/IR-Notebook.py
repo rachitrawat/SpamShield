@@ -9,7 +9,7 @@
 
 # ** Setup Environment **
 
-# In[1]:
+# In[ ]:
 
 
 # load required packages
@@ -17,11 +17,13 @@
 # for creating dataframes from csv datasets
 import pandas as pd
 
+# for regular expressions
+import re
+
 # for stripping stop words
 from nltk.corpus import stopwords
 
 # for TF-IDF
-import math
 from textblob import TextBlob as tb
 
 # for removing HTML tags from text body
@@ -59,7 +61,7 @@ cachedStopWords = stopwords.words("english")
 
 # ** HTML tags Stripper class **
 
-# In[2]:
+# In[ ]:
 
 
 class MLStripper(HTMLParser):
@@ -81,7 +83,7 @@ def strip_tags(html):
 
 # ** TF-IDF helper fucntions **
 
-# In[3]:
+# In[ ]:
 
 
 # tf(word, blob) computes "term frequency" which is the number of times 
@@ -111,10 +113,11 @@ def tfidf(word, blob, bloblist):
     return tf(word, blob) * idf(word, bloblist)
 
 
-# ** pandas - load CSV into dataframe **
+# # 1. Preprocessing
+# **1.1 pandas - load CSV into dataframe **
 # 
 
-# In[4]:
+# In[ ]:
 
 
 # Read CSV
@@ -123,23 +126,23 @@ def tfidf(word, blob, bloblist):
 
 # (1264216, 7) 
 # Columns (Id, OwnerUserId, CreationDate, ClosedDate, Score, Title, Body)
-# frame every 100th question (resource restraints)
-questions_df = pd.read_csv(dataset_dir+dataset_dir_questions, encoding='latin1').iloc[::100, :]
+# frame every 1000th question (resource restraints)
+questions_df = pd.read_csv(dataset_dir+dataset_dir_questions, encoding='latin1').iloc[::10000, :]
 
 # (2014516, 6)
 # Columns (Id, OwnerUserId, CreationDate, ParentId, Score, Body)
-# frame every 100th answer (resource restraints)
-answers_df = pd.read_csv(dataset_dir+dataset_dir_answers, encoding='latin1').iloc[::100, :]
+# frame every 1000th answer (resource restraints)
+answers_df = pd.read_csv(dataset_dir+dataset_dir_answers, encoding='latin1').iloc[::1000, :]
 
 # (3750994, 2)
 # Columns (Id, Tag)
-# frame every 100th tag (resource restraints)
-tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::100, :]
+# frame every 1000th tag (resource restraints)
+tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::1000, :]
 
 
-# ** Sample dataframe before stripping **
+# **1.2 Sample dataframe before stripping **
 
-# In[5]:
+# In[ ]:
 
 
 # Calculate dimensionality
@@ -153,24 +156,24 @@ questions_df.head(10)
 # tags_df.head(10) 
 
 
-# ** Strip HTML tags and stop words from text body **
+# **1.3 Strip HTML tags, stop words and symbols from text body and convert to lowercase **
 
-# In[6]:
+# In[ ]:
 
 
-# Remove HTML tags and stop words from body and title column
+# Remove HTML tags, stop words, symbols from body and title column and convert to lowercase
 for index, row in questions_df.iterrows():
-   questions_df.at[index, 'Body']= ' '.join([word for word in strip_tags(row[6]).split() if word not in cachedStopWords])
-   questions_df.at[index, 'Title']= ' '.join([word for word in strip_tags(row[5]).split() if word not in cachedStopWords])
+   questions_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[6])).lower().split() if word not in cachedStopWords])
+   questions_df.at[index, 'Title']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords])
 
-# Remove HTML tags and stop words from body column
+# Remove HTML tags, stop words, symbols from body and convert to lowercase
 for index, row in answers_df.iterrows():
-   answers_df.at[index, 'Body']= ' '.join([word for word in strip_tags(row[5]).split() if word not in cachedStopWords]) 
+   answers_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords]) 
 
 
-# ** Sample dataframe after stripping **
+# **1.4 Sample dataframe after stripping **
 
-# In[7]:
+# In[ ]:
 
 
 # Calculate dimensionality
@@ -184,44 +187,62 @@ questions_df.head(10)
 # tags_df.head(10)
 
 
-# ** Make a TF-IDF word dictionary (for 5 questions) **
+# ** 1.5 Make a TF-IDF word dictionary **
 
-# In[8]:
+# In[ ]:
 
 
-i=1
 tfidf_dict={}
 bloblist=[]
+idlist=[]
 
 for index, row in questions_df.iterrows():
-    bloblist.append(tb(row[6]))
-    if i==5:
-        break
-    i+=1
+    # also append title to text body
+    bloblist.append(tb(row[6]+" "+row[5]))
+    idlist.append(row[0])
 
 for i, blob in enumerate(bloblist):
-    print("Top words in question {}".format(i + 1))
+    print("Top words in question ID {}".format(idlist[i]))
     scores = {word: tfidf(word, blob, bloblist) for word in blob.words}
     sorted_words = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     for word, score in sorted_words[:3]:
         print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
-        tfidf_dict[word]=round(score, 5)
+        tfidf_dict[word]=[round(score, 5), idlist[i]]
 
 
-# ** Sample TF-IDF dictionary **
+# **1.6 Sample [TF-IDF, ID] dictionary **
 
-# In[9]:
+# In[ ]:
 
 
 for k, v in tfidf_dict.items():
     print(k, v)
 
 
+# In[ ]:
+
+
+def predict(rawQ):
+    # strip stop words, symbols and convert to lowercase
+    strippedQ= ' '.join([word for word in re.sub(r'[^\w]', ' ', rawQ).lower().split() if word not in cachedStopWords])
+    termList=strippedQ.split()
+    
+    print(termList)
+    
+
+
+# In[ ]:
+
+
+inputQ="How to delete a table in SQL?"
+predict(inputQ)
+
+
 # # Initial analysis
 
 # ** Top 10 most common tags **
 
-# In[10]:
+# In[ ]:
 
 
 tags_tally = collections.Counter(tags_df['Tag'])
@@ -232,7 +253,7 @@ x, y = zip(*tags_tally.most_common(10))
 colormap = plt.cm.gist_ncar #nipy_spectral, Set1,Paired  
 colors = [colormap(i) for i in np.linspace(0, 0.8,50)]   
 
-area = [i/50 for i in list(y)]   # 0 to 15 point radiuses
+area = [i/3 for i in list(y)]   # 0 to 15 point radiuses
 plt.figure(figsize=(8,8))
 plt.ylabel("Frequency")
 plt.title("Top 10 most common tags")
@@ -245,7 +266,7 @@ plt.show()
 
 # ![](http://)![](http://)**Distribution  - number of answers per question**
 
-# In[11]:
+# In[ ]:
 
 
 ans_per_question = collections.Counter(answers_df['ParentId'])
@@ -258,7 +279,7 @@ plt.bar(range(N), noAnswers[:N], align='center', alpha=0.7)
 plt.ylabel('Number of Answers per Question')
 plt.xlabel('Question Id')
 plt.title('Distribution of Answers per question ')
-plt.text(10,4,"Average answers per question: "+str(math.floor((np.mean(noAnswers)))))
+plt.text(10,1.5,"Average answers per question: "+str(math.floor((np.mean(noAnswers)))))
 
 plt.show()
 
