@@ -208,7 +208,9 @@ questions_df.head(10).loc[:, 'Title':'Body']
 # tags_df.head(10) 
 
 
-# ** 1.6 Make a TF-IDF word dictionary **
+# ** 1.6 Calculate TF-IDF of words ** <br>
+# Make a dictionary { word (key), posting list (value) } pair.  <br>
+# Posting lists of a word contains its TF-IDF along with question ID.
 
 # In[9]:
 
@@ -230,15 +232,13 @@ for i, blob in enumerate(bloblist):
     for word, score in sorted_words[:3]:
         if i < 5:
             print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
-        # enter only highest tfidf in dict
         if word in tfidf_dict:
-            if(round(score, 5)> tfidf_dict[word][0]):
-                tfidf_dict[word]=[round(score, 5), idlist[i]]
+            tfidf_dict[word].append([idlist[i],round(score, 5)])
         else:
-            tfidf_dict[word]=[round(score, 5), idlist[i]]
+            tfidf_dict[word] = [[idlist[i],round(score, 5)]]
 
 
-# **1.7 Sample [TF-IDF, ID] dictionary **
+# **1.7 Sample dictionary **
 
 # In[10]:
 
@@ -246,7 +246,7 @@ for i, blob in enumerate(bloblist):
 i = 1
 for k, v in tfidf_dict.items():
     print(k, v)
-    if i == 5:
+    if i == 10:
         break
     i+=1
 
