@@ -140,7 +140,7 @@ answers_df = pd.read_csv(dataset_dir+dataset_dir_answers, encoding='latin1').ilo
 tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::1000, :]
 
 
-# **1.2 Sample dataframe before stripping **
+# **1.2 Sample dataframe**
 
 # In[5]:
 
@@ -151,34 +151,14 @@ tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::10
 # tags_df.shape 
 
 # Sample dataframe - uncomment to view
-questions_df.head(10) 
+questions_df.head(10)
 # answers_df.head(10)
 # tags_df.head(10) 
 
 
-# **1.3 Normalize **
-# * strip HTML tags
-# * strip stop words and symbols 
-# * convert to lowercase
-# * strip single characters
-# * strip words that are all numbers 
+# **1.3 Sample dataframe before normalization **
 
 # In[6]:
-
-
-# Remove HTML tags, stop words, symbols from body and title column and convert to lowercase
-for index, row in questions_df.iterrows():
-   questions_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[6])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
-   questions_df.at[index, 'Title']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
-
-# Remove HTML tags, stop words, symbols from body and convert to lowercase
-for index, row in answers_df.iterrows():
-   answers_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()]) 
-
-
-# **1.4 Sample dataframe after stripping **
-
-# In[7]:
 
 
 # Calculate dimensionality
@@ -187,14 +167,50 @@ for index, row in answers_df.iterrows():
 # tags_df.shape 
 
 # Sample dataframe - uncomment to view
-questions_df.head(10)
-# answers_df.head(10)
-# tags_df.head(10)
+questions_df.head(10).loc[:, 'Title':'Body']
+# answers_df.head(10).loc[:, 'Body':]
+# tags_df.head(10) 
 
 
-# ** 1.5 Make a TF-IDF word dictionary **
+# **1.4 Normalize text**
+# * strip HTML tags
+# * strip stop words and symbols 
+# * convert to lowercase
+# * strip single characters
+# * strip words that are all numbers 
+
+# In[7]:
+
+
+# Normalize question body and title
+for index, row in questions_df.iterrows():
+    questions_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[6])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
+    questions_df.at[index, 'Title']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
+
+# Normalize answer body
+for index, row in answers_df.iterrows():
+    answers_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()]) 
+
+
+# **1.5 Sample dataframe after normalization **
 
 # In[8]:
+
+
+# Calculate dimensionality
+# questions_df.shape 
+# answers_df.shape 
+# tags_df.shape 
+
+# Sample dataframe - uncomment to view
+questions_df.head(10).loc[:, 'Title':'Body']
+# answers_df.head(10).loc[:, 'Body':]
+# tags_df.head(10) 
+
+
+# ** 1.6 Make a TF-IDF word dictionary **
+
+# In[9]:
 
 
 tfidf_dict={}
@@ -207,11 +223,13 @@ for index, row in questions_df.iterrows():
     idlist.append(row[0])
 
 for i, blob in enumerate(bloblist):
-    print("Top words in question ID {}".format(idlist[i]))
+    if i < 5:
+        print("Top words in question ID {}".format(idlist[i]))
     scores = {word: tfidf(word, blob, bloblist) for word in blob.words}
     sorted_words = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     for word, score in sorted_words[:3]:
-        print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
+        if i < 5:
+            print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
         # enter only highest tfidf in dict
         if word in tfidf_dict:
             if(round(score, 5)> tfidf_dict[word][0]):
@@ -220,21 +238,25 @@ for i, blob in enumerate(bloblist):
             tfidf_dict[word]=[round(score, 5), idlist[i]]
 
 
-# **1.6 Sample [TF-IDF, ID] dictionary **
-
-# In[9]:
-
-
-for k, v in tfidf_dict.items():
-    print(k, v)
-
+# **1.7 Sample [TF-IDF, ID] dictionary **
 
 # In[10]:
 
 
+i = 1
+for k, v in tfidf_dict.items():
+    print(k, v)
+    if i == 5:
+        break
+    i+=1
+
+
+# In[11]:
+
+
 def predict(rawQ):
-    # strip stop words, symbols and convert to lowercase
-    strippedQ= ' '.join([word for word in re.sub(r'[^\w]', ' ', rawQ).lower().split() if word not in cachedStopWords])
+    # normalize input question
+    strippedQ= ' '.join([word for word in re.sub(r'[^\w]', ' ', rawQ).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
     termList=strippedQ.split()
     print(termList)
     
@@ -243,18 +265,24 @@ def predict(rawQ):
             print(term,tfidf_dict[term])    
 
 
-# In[11]:
+# In[12]:
 
 
-inputQ="How to delete a table in SQL?"
-predict(inputQ)
+inputQ_title="What is the most efficient way to deep clone an object in JavaScript?"
+inputQ_body="""What is the most efficient way to clone a JavaScript object? 
+I've seen obj = eval(uneval(o)); being used, 
+but that's non-standard and only supported by Firefox.
+I've done things like obj = JSON.parse(JSON.stringify(o)); but question the efficiency. 
+I've also seen recursive copying functions with various flaws. 
+I'm surprised no canonical solution exists."""
+predict(inputQ_title + " " + inputQ_body)
 
 
 # # Initial analysis
 
 # ** Top 10 most common tags **
 
-# In[12]:
+# In[13]:
 
 
 tags_tally = collections.Counter(tags_df['Tag'])
@@ -278,7 +306,7 @@ plt.show()
 
 # **Distribution  - number of answers per question**
 
-# In[13]:
+# In[14]:
 
 
 ans_per_question = collections.Counter(answers_df['ParentId'])
