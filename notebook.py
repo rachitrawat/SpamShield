@@ -113,11 +113,25 @@ def tfidf(word, blob, bloblist):
     return tf(word, blob) * idf(word, bloblist)
 
 
+# ** 0.3 Normalizer function **
+# * strip HTML tags
+# * strip stop words and symbols 
+# * convert to lowercase
+# * strip single characters
+# * strip words that are all numbers 
+
+# In[4]:
+
+
+def normalize(str):
+    return ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(str)).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
+
+
 # # 1. Preprocessing
 # **1.1 pandas - load CSV into dataframe **
 # 
 
-# In[4]:
+# In[5]:
 
 
 # Read CSV
@@ -142,7 +156,7 @@ tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::10
 
 # **1.2 Sample dataframe**
 
-# In[5]:
+# In[6]:
 
 
 # Calculate dimensionality
@@ -158,7 +172,7 @@ questions_df.head(10)
 
 # **1.3 Sample dataframe before normalization **
 
-# In[6]:
+# In[7]:
 
 
 # Calculate dimensionality
@@ -173,28 +187,23 @@ questions_df.head(10).loc[:, 'Title':'Body']
 
 
 # **1.4 Normalize text**
-# * strip HTML tags
-# * strip stop words and symbols 
-# * convert to lowercase
-# * strip single characters
-# * strip words that are all numbers 
 
-# In[7]:
+# In[8]:
 
 
 # Normalize question body and title
 for index, row in questions_df.iterrows():
-    questions_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[6])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
-    questions_df.at[index, 'Title']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
+    questions_df.at[index, 'Body']= normalize(row[6])
+    questions_df.at[index, 'Title']= normalize(row[5])
 
 # Normalize answer body
 for index, row in answers_df.iterrows():
-    answers_df.at[index, 'Body']= ' '.join([word for word in re.sub(r'[^\w]', ' ', strip_tags(row[5])).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()]) 
+    answers_df.at[index, 'Body']= normalize(row[5]) 
 
 
 # **1.5 Sample dataframe after normalization **
 
-# In[8]:
+# In[9]:
 
 
 # Calculate dimensionality
@@ -212,7 +221,7 @@ questions_df.head(10).loc[:, 'Title':'Body']
 # Make a dictionary { word (key), posting list (value) } pair.  <br>
 # Posting lists of a word contains its TF-IDF along with question ID.
 
-# In[9]:
+# In[10]:
 
 
 tfidf_dict={}
@@ -240,7 +249,7 @@ for i, blob in enumerate(bloblist):
 
 # **1.7 Sample dictionary **
 
-# In[10]:
+# In[11]:
 
 
 i = 1
@@ -251,13 +260,12 @@ for k, v in tfidf_dict.items():
     i+=1
 
 
-# In[11]:
+# In[12]:
 
 
 def predict(rawQ):
-    # normalize input question
-    strippedQ= ' '.join([word for word in re.sub(r'[^\w]', ' ', rawQ).lower().split() if word not in cachedStopWords and len(word) > 1 and not word.isdigit()])
-    termList=strippedQ.split()
+    # normalize input question text and get unique terms
+    termList=list(set(normalize(rawQ).split()))
     print(termList)
     
     for term in termList:
@@ -265,7 +273,7 @@ def predict(rawQ):
             print(term,tfidf_dict[term])    
 
 
-# In[12]:
+# In[13]:
 
 
 inputQ_title="What is the most efficient way to deep clone an object in JavaScript?"
@@ -282,7 +290,7 @@ predict(inputQ_title + " " + inputQ_body)
 
 # ** Top 10 most common tags **
 
-# In[13]:
+# In[14]:
 
 
 tags_tally = collections.Counter(tags_df['Tag'])
@@ -306,7 +314,7 @@ plt.show()
 
 # **Distribution  - number of answers per question**
 
-# In[14]:
+# In[15]:
 
 
 ans_per_question = collections.Counter(answers_df['ParentId'])
