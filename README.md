@@ -1,1 +1,0 @@
-## CS 309 Information Retreival 
