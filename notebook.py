@@ -36,6 +36,8 @@ import collections
 import numpy as np
 import math
 
+from difflib import SequenceMatcher
+
 # for plotting graphs
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -225,6 +227,7 @@ questions_df.head(10).loc[:, 'Title':'Body']
 
 
 tfidf_dict={}
+qID_dict={}
 bloblist=[]
 idlist=[]
 
@@ -238,18 +241,25 @@ for i, blob in enumerate(bloblist):
         print("Top words in question ID {}".format(idlist[i]))
     scores = {word: tfidf(word, blob, bloblist) for word in blob.words}
     sorted_words = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    for word, score in sorted_words[:3]:
+    for word, score in sorted_words[:4]:
         if i < 5:
             print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
         if word in tfidf_dict:
             tfidf_dict[word].append([idlist[i],round(score, 5)])
         else:
             tfidf_dict[word] = [[idlist[i],round(score, 5)]]
+        
+        if idlist[i] in qID_dict:
+            qID_dict[idlist[i]].append(word)
+        else:
+            lst=[]
+            lst.append(word)
+            qID_dict[idlist[i]]=lst
 
 
 # **1.7 Sample dictionary **
 
-# In[11]:
+# In[16]:
 
 
 i = 1
@@ -258,19 +268,35 @@ for k, v in tfidf_dict.items():
     if i == 10:
         break
     i+=1
+    
+# i = 1
+# for k, v in qID_dict.items():
+#     print(k, v)
+#     if i == 10:
+#         break
+#     i+=1
 
+
+# ** Duplicate predictor function **
 
 # In[12]:
 
 
-def predict(rawQ):
-    # normalize input question text and get unique terms
-    termList=list(set(normalize(rawQ).split()))
-    print(termList)
+def predict_duplicate(query):
     
-    for term in termList:
-        if term in tfidf_dict:
-            print(term,tfidf_dict[term])    
+    def top_words(text):
+        counts = collections.Counter(text.split())
+        return [elem for elem, _ in counts.most_common(4)]
+
+    termList=top_words(query)
+    
+    for k, v in qID_dict.items():
+        if set(termList) == set(qID_dict[k]):
+            print("Duplicate Question")
+            return
+    
+    print("Not a Duplicate Question.")
+                
 
 
 # In[13]:
@@ -283,7 +309,13 @@ but that's non-standard and only supported by Firefox.
 I've done things like obj = JSON.parse(JSON.stringify(o)); but question the efficiency. 
 I've also seen recursive copying functions with various flaws. 
 I'm surprised no canonical solution exists."""
-predict(inputQ_title + " " + inputQ_body)
+inputQ_tags="javascript, json, object"
+
+# normalize
+normalized_query=normalize(inputQ_title + " " + inputQ_body+ " " + inputQ_tags)
+
+# predict whether duplicate question
+predict_duplicate(normalized_query)
 
 
 # # Initial analysis
