@@ -9,7 +9,7 @@
 
 # # 0. Setup Environment
 
-# In[1]:
+# In[ ]:
 
 
 # load required packages
@@ -64,7 +64,7 @@ cachedStopWords = stopwords.words("english")
 
 # ** 0.1 HTML tags Stripper class **
 
-# In[2]:
+# In[ ]:
 
 
 class MLStripper(HTMLParser):
@@ -86,7 +86,7 @@ def strip_tags(html):
 
 # ** 0.2 TF-IDF helper fucntions **
 
-# In[3]:
+# In[ ]:
 
 
 # tf(word, blob) computes "term frequency" which is the number of times 
@@ -123,7 +123,7 @@ def tfidf(word, blob, bloblist):
 # * strip single characters
 # * strip words that are all numbers 
 
-# In[4]:
+# In[ ]:
 
 
 def normalize(str):
@@ -134,7 +134,7 @@ def normalize(str):
 # **1.1 pandas - load CSV into dataframe **
 # 
 
-# In[5]:
+# In[ ]:
 
 
 # Read CSV
@@ -159,7 +159,7 @@ tags_df = pd.read_csv(dataset_dir+dataset_dir_tags, encoding='latin1').iloc[::10
 
 # **1.2 Sample dataframe**
 
-# In[6]:
+# In[ ]:
 
 
 # Calculate dimensionality
@@ -175,7 +175,7 @@ questions_df.head(10)
 
 # **1.3 Sample dataframe before normalization **
 
-# In[7]:
+# In[ ]:
 
 
 # Calculate dimensionality
@@ -191,7 +191,7 @@ questions_df.head(10).loc[:, 'Title':'Body']
 
 # **1.4 Normalize text**
 
-# In[8]:
+# In[ ]:
 
 
 # Normalize question body and title
@@ -206,7 +206,7 @@ for index, row in answers_df.iterrows():
 
 # **1.5 Sample dataframe after normalization **
 
-# In[9]:
+# In[ ]:
 
 
 # Calculate dimensionality
@@ -224,7 +224,7 @@ questions_df.head(10).loc[:, 'Title':'Body']
 # Make a dictionary { word (key), posting list (value) } pair.  <br>
 # Posting lists of a word contains its TF-IDF along with question ID.
 
-# In[10]:
+# In[ ]:
 
 
 tfidf_dict={}
@@ -263,7 +263,7 @@ for i, blob in enumerate(bloblist):
 
 # **1.7 Sample dictionary **
 
-# In[11]:
+# In[ ]:
 
 
 i = 1
@@ -283,7 +283,7 @@ for k, v in tfidf_dict.items():
 
 # ** Duplicate predictor function **
 
-# In[12]:
+# In[ ]:
 
 
 def predict_duplicate(query):
@@ -303,7 +303,7 @@ print("Not a Duplicate Question.")
                 
 
 
-# In[13]:
+# In[ ]:
 
 
 inputQ_title="What is the most efficient way to deep clone an object in JavaScript?"
@@ -326,7 +326,7 @@ predict_duplicate(normalized_query)
 
 # ** Top 10 most common tags **
 
-# In[14]:
+# In[ ]:
 
 
 tags_tally = collections.Counter(tags_df['Tag'])
@@ -350,7 +350,7 @@ plt.show()
 
 # **Distribution  - number of answers per question**
 
-# In[15]:
+# In[ ]:
 
 
 ans_per_question = collections.Counter(answers_df['ParentId'])
@@ -368,45 +368,45 @@ plt.text(10,1.5,"Average answers per question: "+str(math.floor((np.mean(noAnswe
 plt.show()
 
 
-# In[16]:
+# In[ ]:
 
 
-# # -*- coding: utf-8 -*-
-# """
-# Created on Fri Nov  3 19:57:17 2017
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov  3 19:57:17 2017
 
-# @author: RudradeepGuha
-# """
+@author: RudradeepGuha
+"""
 
-# from sklearn.naive_bayes import GaussianNB
-# import numpy as np
-# import pandas as pd
+from sklearn.naive_bayes import GaussianNB
+import numpy as np
+import pandas as pd
 
-# data = questions_df
+data = questions_df
 
-# X = np.zeros((12643, 2), dtype=int)
-# Y = np.zeros((12643, 1), dtype=int)
-# t = data.Title
-# counter = 0
+X = np.zeros((12643, 2), dtype=int)
+Y = np.zeros((12643, 1), dtype=int)
+t = data.Title
+counter = 0
 
-# # For all titles, we count the number of characters and add that to X and depending on the length
-# # classify them as 0(less likely to be upvoted) or 1(more likely to be upvoted) 
-# for i in t:
-#     f1 = len(i) - i.count(" ")
-#     f2 = data.loc[data['Title'] == i, 'OwnerUserId'].iloc[0]
-#     X[counter] = np.array([f1, f2])
-#     score = data.loc[data['Title'] == i, 'Score'].iloc[0]
-#     if score < 20:
-#         Y[counter] = 0
-#     else:
-#         Y[counter] = 1
+# For all titles, we count the number of characters and add that to X and depending on the length
+# classify them as 0(less likely to be upvoted) or 1(more likely to be upvoted) 
+for i in t:
+    f1 = len(i) - i.count(" ")
+    f2 = data.loc[data['Title'] == i, 'OwnerUserId'].iloc[0]
+    X[counter] = np.array([f1, f2])
+    score = data.loc[data['Title'] == i, 'Score'].iloc[0]
+    if score < 20:
+        Y[counter] = 0
+    else:
+        Y[counter] = 1
 
-# print(X)
-# print(Y)
+print(X)
+print(Y)
 
-# model = GaussianNB()
+model = GaussianNB()
 
-# model.fit(X, Y)
+model.fit(X, Y)
 
-# print(model.predict_proba(np.array([180, 345768])))
+print(model.predict_proba(np.array([[180, 345768]])))
 
