@@ -26,6 +26,9 @@ from nltk.corpus import stopwords
 # for TF-IDF
 from textblob import TextBlob as tb
 
+# for jaccard score
+from sklearn.metrics import jaccard_similarity_score
+
 # for removing HTML tags from text body
 from html.parser import HTMLParser
 
@@ -35,8 +38,6 @@ import collections
 # for scientific computing
 import numpy as np
 import math
-
-from difflib import SequenceMatcher
 
 # for plotting graphs
 import matplotlib.pyplot as plt
@@ -241,14 +242,17 @@ for i, blob in enumerate(bloblist):
         print("Top words in question ID {}".format(idlist[i]))
     scores = {word: tfidf(word, blob, bloblist) for word in blob.words}
     sorted_words = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    for word, score in sorted_words[:4]:
+    for word, score in sorted_words[:5]:
         if i < 5:
             print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
+            
+        # word dict    
         if word in tfidf_dict:
             tfidf_dict[word].append([idlist[i],round(score, 5)])
         else:
             tfidf_dict[word] = [[idlist[i],round(score, 5)]]
         
+        # qID dict
         if idlist[i] in qID_dict:
             qID_dict[idlist[i]].append(word)
         else:
@@ -259,7 +263,7 @@ for i, blob in enumerate(bloblist):
 
 # **1.7 Sample dictionary **
 
-# In[16]:
+# In[11]:
 
 
 i = 1
@@ -286,16 +290,16 @@ def predict_duplicate(query):
     
     def top_words(text):
         counts = collections.Counter(text.split())
-        return [elem for elem, _ in counts.most_common(4)]
+        return [elem for elem, _ in counts.most_common(5)]
 
     termList=top_words(query)
     
     for k, v in qID_dict.items():
-        if set(termList) == set(qID_dict[k]):
-            print("Duplicate Question")
+        if jaccard_similarity_score(termList, qID_dict[k]) >= 0.75:
+            print("Duplicate Question. Question exists with qID: " + k)
             return
     
-    print("Not a Duplicate Question.")
+print("Not a Duplicate Question.")
                 
 
 
@@ -362,4 +366,47 @@ plt.title('Distribution of Answers per question ')
 plt.text(10,1.5,"Average answers per question: "+str(math.floor((np.mean(noAnswers)))))
 
 plt.show()
+
+
+# In[16]:
+
+
+# # -*- coding: utf-8 -*-
+# """
+# Created on Fri Nov  3 19:57:17 2017
+
+# @author: RudradeepGuha
+# """
+
+# from sklearn.naive_bayes import GaussianNB
+# import numpy as np
+# import pandas as pd
+
+# data = questions_df
+
+# X = np.zeros((12643, 2), dtype=int)
+# Y = np.zeros((12643, 1), dtype=int)
+# t = data.Title
+# counter = 0
+
+# # For all titles, we count the number of characters and add that to X and depending on the length
+# # classify them as 0(less likely to be upvoted) or 1(more likely to be upvoted) 
+# for i in t:
+#     f1 = len(i) - i.count(" ")
+#     f2 = data.loc[data['Title'] == i, 'OwnerUserId'].iloc[0]
+#     X[counter] = np.array([f1, f2])
+#     score = data.loc[data['Title'] == i, 'Score'].iloc[0]
+#     if score < 20:
+#         Y[counter] = 0
+#     else:
+#         Y[counter] = 1
+
+# print(X)
+# print(Y)
+
+# model = GaussianNB()
+
+# model.fit(X, Y)
+
+# print(model.predict_proba(np.array([180, 345768])))
 
