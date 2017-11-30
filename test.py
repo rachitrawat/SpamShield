@@ -121,22 +121,22 @@ class Page1(Page):
 class Page2(Page1):
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
-        image = Image.open("2.jpg")
-        bg_image = ImageTk.PhotoImage(image)
-        bg_label = tk.Label(self, image=bg_image)
-        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-        bg_label.image = bg_image
+#        image = Image.open("2.jpg")
+#        bg_image = ImageTk.PhotoImage(image)
+#        bg_label = tk.Label(self, image=bg_image)
+#        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+#        bg_label.image = bg_image
         Page2.label = tk.Label(self, text="")
         Page2.label.pack(side="top", fill="both", expand=True)
 
 class Page3(Page1):
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
-        image = Image.open("1.jpg")
-        bg_image = ImageTk.PhotoImage(image)
-        bg_label = tk.Label(self, image=bg_image)
-        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-        bg_label.image = bg_image
+#        image = Image.open("1.jpg")
+#        bg_image = ImageTk.PhotoImage(image)
+#        bg_label = tk.Label(self, image=bg_image)
+#        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+#        bg_label.image = bg_image
         Page3.label = tk.Label(self, text="")
         Page3.label.pack(side="top", fill="both", expand=True)
 
