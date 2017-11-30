@@ -1,5 +1,6 @@
 # import libraries
 import string
+from tkinter import *
 import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
@@ -56,9 +57,49 @@ def predict(msg_str):
         test_feature = vectorizer.transform(test_data)
         return test_feature
 
-    return (mnb.predict(test_case(msg_str)))[0]
+    pred_val = (mnb.predict(test_case(msg_str)))[0]
+    if pred_val == "ham":
+        pred_val = "Not a spam"
+    return pred_val
 
 
-while True:
-    input_str = input("Enter Message: ")
-    print(predict(input_str))
+class Window(Frame):
+    def __init__(self, master=None):
+        Frame.__init__(self, master)
+        self.master = master
+        self.init_window()
+
+    # Creation of init_window
+    def init_window(self):
+        # changing the title of our master widget
+        self.master.title("Spam Shield")
+
+        # allowing the widget to take the full space of the root window
+        self.pack(fill=BOTH, expand=1)
+
+
+root = Tk()
+e = Entry(root)
+
+text = Label(text="Enter message to check for spam: ")
+text.config(font=("Courier", 15))
+text.pack()
+
+text1 = Label(text="")
+text1.config(font=("Courier", 15))
+
+# size of the window
+root.geometry(str(root.winfo_screenwidth()) + "x" + str(root.winfo_screenheight()))
+
+e.pack()
+e.focus_set()
+
+
+def checkForSpam():
+    text1.config(text=predict(e.get()))
+    text1.pack()
+
+b = Button(root, text='Check', command=checkForSpam)
+b.pack(side='top')
+app = Window(root)
+root.mainloop()
