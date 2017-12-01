@@ -1,20 +1,20 @@
-# import libraries
+import tkinter as tk
 import string
-from tkinter import *
+from PIL import Image, ImageTk
 import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-
+from pygame import mixer
 # read csv
 
-sms = pd.read_csv('C:\\Users\\rachit\\PycharmProjects\\CS309-IR-Monsoon-2017-RR\\spam.csv', encoding='latin-1')
+sms = pd.read_csv('spam.csv', encoding='latin-1')
 sms = sms.drop(['Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4'], axis=1)
 
 # make a copy of message column
 text_feat = sms['message'].copy()
-
+mixer.init()
 
 # remove stop words, punctuation and do stemming
 def text_process(text):
@@ -59,47 +59,122 @@ def predict(msg_str):
 
     pred_val = (mnb.predict(test_case(msg_str)))[0]
     if pred_val == "ham":
+        mixer.music.load('ham.mp3')
+        mixer.music.play()
         pred_val = "Not a spam"
+    else:
+        mixer.music.load('spam.mp3')
+        mixer.music.play()
     return pred_val
 
 
-class Window(Frame):
-    def __init__(self, master=None):
-        Frame.__init__(self, master)
-        self.master = master
-        self.init_window()
+class Page(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        tk.Frame.__init__(self, *args, **kwargs)
 
-    # Creation of init_window
-    def init_window(self):
-        # changing the title of our master widget
-        self.master.title("Spam Shield")
-
-        # allowing the widget to take the full space of the root window
-        self.pack(fill=BOTH, expand=1)
+    def show(self):
+        self.lift()
 
 
-root = Tk()
-e = Entry(root)
+class Page1(Page):
+    def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
+        Page1.spam_list = []
+        Page1.not_spam_list = []
+        #        self.configure(background='black')
+        image = Image.open("1.jpg")
+        bg_image = ImageTk.PhotoImage(image)
+        bg_label = tk.Label(self, image=bg_image)
+        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        bg_label.image = bg_image
 
-text = Label(text="Enter message to check for spam: ")
-text.config(font=("Courier", 15))
-text.pack()
+        e = tk.Entry(self, width=50, justify='center')
 
-text1 = Label(text="")
-text1.config(font=("Courier", 15))
+        text = tk.Label(self, text="Enter message to check for spam: ")
+        text.config(font=("Times New Roman", 25), fg='white', bg='black')
+        text.place(relx=0.5, rely=0.4, anchor=tk.CENTER)
 
-# size of the window
-root.geometry(str(root.winfo_screenwidth()) + "x" + str(root.winfo_screenheight()))
+        text1 = tk.Label(self, text="")
+        text1.config(font=("Museo Sans", 15, "bold"), fg='white', bg='black')
+        text1.place(relx=0.5, rely=0.85, anchor=tk.CENTER)
 
-e.pack()
-e.focus_set()
+        e.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
+        e.config(fg='black', bg='grey')
+        e.focus_set()
+
+        def checkForSpam():
+            text1.config(text=predict(e.get()))
+            if "N" in text1.cget("text"):
+                self.not_spam_list.append(e.get())
+                Page2.label.config(text=("\n".join(self.not_spam_list)), fg='white', bg='black',
+                                   font=("Museo Sans", 15, "bold"))
+            else:
+                self.spam_list.append(e.get())
+                Page3.label.config(text=("\n".join(self.spam_list)), fg='white', bg='black',
+                                   font=("Museo Sans", 15, "bold"))
+
+        b = tk.Button(self, text='Check', command=checkForSpam)
+        b.place(relx=0.5, rely=0.7, anchor=tk.CENTER)
+        b.config(width=15, height=2, fg='white', bg='black')
 
 
-def checkForSpam():
-    text1.config(text=predict(e.get()))
-    text1.pack()
+class Page2(Page1):
+    def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
+        #        image = Image.open("2.jpg")
+        #        bg_image = ImageTk.PhotoImage(image)
+        #        bg_label = tk.Label(self, image=bg_image)
+        #        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        #        bg_label.image = bg_image
+        Page2.label = tk.Label(self, text="")
+        Page2.label.pack(side="top", fill="both", expand=True)
 
-b = Button(root, text='Check', command=checkForSpam)
-b.pack(side='top')
-app = Window(root)
-root.mainloop()
+
+class Page3(Page1):
+    def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
+        #        image = Image.open("1.jpg")
+        #        bg_image = ImageTk.PhotoImage(image)
+        #        bg_label = tk.Label(self, image=bg_image)
+        #        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        #        bg_label.image = bg_image
+        Page3.label = tk.Label(self, text="")
+        Page3.label.pack(side="top", fill="both", expand=True)
+
+
+class MainView(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        tk.Frame.__init__(self, *args, **kwargs)
+        p1 = Page1(self)
+        p2 = Page2(self)
+        p3 = Page3(self)
+
+        buttonframe = tk.Frame(self)
+        container = tk.Frame(self)
+        buttonframe.pack(side="top", fill="x", expand=False)
+        container.pack(side="top", fill="both", expand=True)
+
+        p1.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
+        p2.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
+        p3.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
+
+        b1 = tk.Button(root, text="Home", command=p1.lift)
+        b1.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
+        b1.config(width=10, height=2, fg='gold', bg='black')
+        b2 = tk.Button(root, text="History of Not Spam", command=p2.lift)
+        b2.place(relx=0.2, rely=0.15, anchor=tk.CENTER)
+        b2.config(width=20, height=2, fg='light green', bg='black')
+        b3 = tk.Button(root, text="History of Spam", command=p3.lift)
+        b3.place(relx=0.8, rely=0.15, anchor=tk.CENTER)
+        b3.config(width=20, height=2, fg='red', bg='black')
+
+        p1.show()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Spam Filter")
+    main = MainView(root)
+    main.pack(side="top", fill="both", expand=True)
+    root.wm_geometry("500x500")
+    root.mainloop()
