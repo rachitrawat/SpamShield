@@ -173,7 +173,7 @@ class MainView(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Spam Filter")
+    root.title("SpamShield")
     main = MainView(root)
     main.pack(side="top", fill="both", expand=True)
     root.wm_geometry("500x500")
